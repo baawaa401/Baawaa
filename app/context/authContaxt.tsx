@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider, User } from '@firebase/auth';
+import { auth } from '../Firebase.jsx'
 
 // Define the shape of the context value
 interface AuthContextValue {
@@ -20,11 +22,27 @@ export const AuthContextProvider: React.FC<MyComponentProps> = ({ children }) =>
 
     const login = () => {
         setIsAuthenticated(true);
+        const provider = new GoogleAuthProvider();
+        signInWithPopup(auth, provider);
     };
 
     const logout = () => {
         setIsAuthenticated(false);
+        signOut(auth);
     };
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser: User | null) => {
+            if (currentUser) {
+                // User is signed in
+                setUser(currentUser.displayName || 'Unknown User');
+            } else {
+                // User is signed out
+                setUser(''); // Or whatever default value you want to set
+            }
+        });
+        return () => unsubscribe();
+    }, [user]);
 
     // Provide the context value
     return (
